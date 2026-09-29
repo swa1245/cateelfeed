@@ -251,7 +251,7 @@ function LogSheet<T extends Row>({
 
 export function BoilerLogPage() {
   const sheet = useRows(listBoiler, saveBoiler);
-  const shown = visible(sheet.rows, sheet.date, sheet.search, (row) => [row.shift, row.boiler, row.fuel, row.operator, row.safety]);
+  const shown = visible(sheet.rows, sheet.date, sheet.search, (row) => [row.shift, row.boiler, row.fuel, row.operator, row.safety || ""]);
   const patch = (id: string, next: Partial<BoilerRow>) => {
     const current = sheet.rows.find((row) => row.id === id);
     const merged = current ? { ...current, ...next } : null;

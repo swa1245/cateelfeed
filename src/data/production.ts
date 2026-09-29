@@ -271,7 +271,7 @@ export function saveBatches(rows: BatchRow[]) {
   write(BATCH_KEY, rows);
 }
 
-export function listMaterialIssues() {
+export function listMaterialIssues(): MaterialIssueRow[] {
   return withBatchShift(read<MaterialIssueRow>(ISSUE_KEY, weekIssues())).map((row) => {
     const line = weighLine({ ...row, tolerancePct: row.tolerancePct || "0.5" });
     return { ...row, tolerancePct: row.tolerancePct || "0.5", qcStatus: line.qc, status: line.status };

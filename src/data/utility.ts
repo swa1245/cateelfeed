@@ -1,5 +1,4 @@
 import { weekAir, weekBoiler, weekFuel, weekPower, weekWater } from "@/data/history";
-import { todayIso } from "@/data/movements";
 
 export const BOILERS = ["Boiler 1", "Boiler 2"] as const;
 export const BOILER_FUELS = ["Rice husk", "Coal", "Firewood", "Diesel"] as const;
@@ -269,7 +268,7 @@ function airSeed(): CompressorRow[] {
   return weekAir();
 }
 
-export function listBoiler() {
+export function listBoiler(): BoilerRow[] {
   return read(BOILER_KEY, boilerSeed()).map((row) => ({
     ...row,
     feedKind: row.feedKind || "Consumed KL",
@@ -278,7 +277,7 @@ export function listBoiler() {
 export function saveBoiler(rows: BoilerRow[]) {
   write(BOILER_KEY, rows);
 }
-export function listPower() {
+export function listPower(): PowerRow[] {
   return read(POWER_KEY, powerSeed()).map((row) => {
     const reading = powerReading(row);
     return { ...row, meterId: row.meterId || "EB-1", dgId: row.dgId || "DG-1", units: reading.units, dgUnits: reading.dgUnits };
@@ -287,7 +286,7 @@ export function listPower() {
 export function savePower(rows: PowerRow[]) {
   write(POWER_KEY, rows);
 }
-export function listWater() {
+export function listWater(): WaterRow[] {
   return read(WATER_KEY, waterSeed()).map((row) => {
     const reading = waterReading(row);
     return { ...row, entryType: reading.entryType, used: reading.used, shift: row.shift || "A" };
@@ -296,7 +295,7 @@ export function listWater() {
 export function saveWater(rows: WaterRow[]) {
   write(WATER_KEY, rows);
 }
-export function listFuel() {
+export function listFuel(): FuelRow[] {
   return read(FUEL_KEY, fuelSeed()).map((row) => ({
     ...row,
     closing: fuelReading(row).closing,
@@ -308,7 +307,7 @@ export function listFuel() {
 export function saveFuel(rows: FuelRow[]) {
   write(FUEL_KEY, rows);
 }
-export function listCompressor() {
+export function listCompressor(): CompressorRow[] {
   return read(AIR_KEY, airSeed()).map((row) => ({
     ...row,
     compressor: row.compressor || "Compressor 1",

@@ -6,7 +6,6 @@ import { SheetSelect } from "@/components/SheetSelect";
 import { useAuth } from "@/context/AuthContext";
 import {
   COLOUR_OPTIONS,
-  DOC_STATUS,
   ENTRY_TYPES,
   FEED_PRODUCTS,
   FOREIGN_OPTIONS,
@@ -753,7 +752,6 @@ export function GoodsReceiptPage() {
 }
 
 export function BaggingPage() {
-  const { user } = useAuth();
   const sheet = useRegister(listOutward, saveOutward);
   const rows = sheet.rows.filter((row) =>
     matches(row, sheet.date, sheet.search, [row.batchNo, productLabel(row.product), row.bagCount]),

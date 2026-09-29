@@ -1002,6 +1002,7 @@ export function RawMaterialPage() {
             status: "Pending",
             source: "",
             tolerancePct: "0.5",
+            qcStatus: "Pending",
           },
           ...sheet.rows,
         ])

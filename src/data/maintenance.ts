@@ -227,7 +227,7 @@ function spareSeed(): SpareRow[] {
   return weekSpares();
 }
 
-export function listBreakdowns() {
+export function listBreakdowns(): BreakdownRow[] {
   return read(BREAK_KEY, breakSeed()).map((row) => {
     const span = breakdownHours(row);
     return { ...row, faultType: row.faultType || "Mechanical", hours: span.hours || row.hours };
@@ -236,7 +236,7 @@ export function listBreakdowns() {
 export function saveBreakdowns(rows: BreakdownRow[]) {
   write(BREAK_KEY, rows);
 }
-export function listPreventive() {
+export function listPreventive(): PreventiveRow[] {
   return read(PREV_KEY, prevSeed()).map((row) => {
     const result = pmResult(row);
     const dueDate = row.dueDate || (row.frequency === "Monthly" && result !== "Completed" ? shiftDate(row.date, -1) : row.date);
@@ -252,7 +252,7 @@ export function listPreventive() {
 export function savePreventive(rows: PreventiveRow[]) {
   write(PREV_KEY, rows);
 }
-export function listChecklist() {
+export function listChecklist(): ChecklistRow[] {
   return read(CHECK_KEY, checkSeed()).map((row) => ({
     ...row,
     inspectType: row.inspectType || "Routine",
@@ -262,7 +262,7 @@ export function listChecklist() {
 export function saveChecklist(rows: ChecklistRow[]) {
   write(CHECK_KEY, rows);
 }
-export function listSpares() {
+export function listSpares(): SpareRow[] {
   return read(SPARE_KEY, spareSeed()).map((row) => {
     const stock = spareStock(row.part);
     return { ...row, stock: stock == null ? row.stock || "" : String(stock), location: row.location || "Maintenance store", usedQty: row.usedQty || row.qty };
