@@ -870,7 +870,7 @@ export function DispatchWeighPage() {
     <DataSheet
       kicker="Outward"
       title="DISPATCH WEIGHMENT"
-      subtitle={`${user?.organizationName || "CatelFeed"} · Net dispatch is loaded weight minus empty weight`}
+      subtitle={`${user?.organizationName || "CattleFeed"} · Net dispatch is loaded weight minus empty weight`}
       icon={<Scale size={22} strokeWidth={2.2} />}
       rows={rows}
       date={sheet.date}

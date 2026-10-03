@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { ArrowLeftRight, FileBarChart, Package, Plus, Save, Search, Activity } from "lucide-react";
+import { ArrowLeftRight, FileBarChart, Plus, Save, Search, Activity } from "lucide-react";
 import { SheetDatePicker } from "@/components/SheetDatePicker";
 import { SheetSelect } from "@/components/SheetSelect";
 import { formatSheetDate, sheetDateFromQuery } from "@/data/movements";
@@ -9,19 +9,15 @@ import {
   FLOW_STATUSES,
   MOVE_TYPES,
   REPORT_STATUSES,
-  STOCK_STATUSES,
   STORES,
   listFlows,
-  listMaterialDetails,
   listMovements,
   listStockReports,
   nextWhId,
   saveFlows,
-  saveMaterialDetails,
   saveMovements,
   saveStockReports,
   type FlowRow,
-  type MaterialDetailRow,
   type MovementRow,
   type StockReportRow,
 } from "@/data/warehouse";
@@ -194,73 +190,6 @@ function visible<T extends Row>(rows: T[], date: string, search: string, fields:
     if (!query) return true;
     return fields(row).join(" ").toLowerCase().includes(query);
   });
-}
-
-export function MaterialDetailsPage() {
-  const sheet = useRows(listMaterialDetails, saveMaterialDetails);
-  const rows = visible(sheet.rows, sheet.date, sheet.search, (row) => [
-    row.store, row.rack, row.material, row.supplier, row.grade, row.status,
-  ]);
-  const update = (id: string, patch: Partial<MaterialDetailRow>) => {
-    sheet.commit(sheet.rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
-  };
-
-  return (
-    <LogSheet
-      title="MATERIAL DETAILS"
-      icon={<Package size={22} strokeWidth={2.2} />}
-      rows={rows}
-      date={sheet.date}
-      savedDates={sheet.savedDates}
-      onDateChange={sheet.setDate}
-      search={sheet.search}
-      onSearch={sheet.setSearch}
-      placeholder="Search rack, material, supplier…"
-      status={sheet.status}
-      onSave={() => sheet.flash("Material sheet saved on this browser.")}
-      onAdd={() =>
-        sheet.commit([
-          {
-            id: nextWhId("MD", sheet.rows),
-            date: sheet.date,
-            store: "A",
-            rack: "",
-            material: "",
-            stockMt: "",
-            bags: "",
-            supplier: "",
-            grade: "",
-            cp: "",
-            fat: "",
-            moisture: "",
-            inward: "",
-            expiry: "",
-            status: "In Stock",
-          },
-          ...sheet.rows,
-        ])
-      }
-      empty="No material rows for this date. Click Add row."
-      headers={["Store", "Rack", "Material", "Stock (MT)", "Bags", "Supplier", "Grade", "CP %", "Fat %", "Moisture %", "Last inward", "Expiry", "Status"]}
-      render={(row) => (
-        <>
-          {choiceCell(row.store, STORES, (store) => update(row.id, { store: store as MaterialDetailRow["store"] }))}
-          {textCell(row.rack, (rack) => update(row.id, { rack }))}
-          {textCell(row.material, (material) => update(row.id, { material }))}
-          {textCell(row.stockMt, (stockMt) => update(row.id, { stockMt }), "number")}
-          {textCell(row.bags, (bags) => update(row.id, { bags }), "number")}
-          {textCell(row.supplier, (supplier) => update(row.id, { supplier }))}
-          {textCell(row.grade, (grade) => update(row.id, { grade }))}
-          {textCell(row.cp, (cp) => update(row.id, { cp }), "number")}
-          {textCell(row.fat, (fat) => update(row.id, { fat }), "number")}
-          {textCell(row.moisture, (moisture) => update(row.id, { moisture }), "number")}
-          {textCell(row.inward, (inward) => update(row.id, { inward }))}
-          {textCell(row.expiry, (expiry) => update(row.id, { expiry }))}
-          {choiceCell(row.status, STOCK_STATUSES, (status) => update(row.id, { status }))}
-        </>
-      )}
-    />
-  );
 }
 
 export function InboundOutboundPage() {

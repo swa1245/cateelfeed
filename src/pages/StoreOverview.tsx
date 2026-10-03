@@ -75,7 +75,7 @@ function TrendChart() {
     <svg className="cf-store-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="DDGS stock in MT and bags, 02 Sep to 08 Sep">
       {ticks.map((tick) => (
         <g key={tick}>
-          <line x1={pad.l} x2={width - pad.r} y1={yMt(tick)} y2={yMt(tick)} stroke="#efe4d6" />
+          <line x1={pad.l} x2={width - pad.r} y1={yMt(tick)} y2={yMt(tick)} stroke="#94a3b8" />
           <text x={pad.l - 6} y={yMt(tick) + 4} textAnchor="end">{tick}</text>
         </g>
       ))}
@@ -95,7 +95,7 @@ function TrendChart() {
       })}
       <polyline points={line} fill="none" stroke="#1f9d4e" strokeWidth="2.5" strokeLinejoin="round" />
       {STOCK_TREND.map((point, index) => (
-        <circle key={`${point.day}-dot`} cx={x(index)} cy={yMt(point.mt)} r="3.5" fill="#fff" stroke="#1f9d4e" strokeWidth="2" />
+        <circle key={`${point.day}-dot`} cx={x(index)} cy={yMt(point.mt)} r="5" fill="#fff" stroke="#15803d" strokeWidth="2.5" />
       ))}
       {STOCK_TREND.map((point, index) => (
         <text key={`${point.day}-label`} x={x(index)} y={height - 10} textAnchor="middle">{point.day}</text>

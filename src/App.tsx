@@ -25,12 +25,9 @@ import { FinishedFeedQcPage, InProcessQcPage, QcOverviewPage, RawMaterialQcPage,
 import { StoreOverviewPage } from "@/pages/StoreOverview";
 import { BreakdownPage, ChecklistPage, PreventivePage, SparesPage } from "@/pages/MaintenancePages";
 import { BoilerLogPage, CompressorLogPage, FuelLogPage, PowerLogPage, WaterLogPage } from "@/pages/UtilityPages";
-import {
-  InboundOutboundPage,
-  MaterialDetailsPage,
-  StockMovementsPage,
-  StoreReportsPage,
-} from "@/pages/WarehouseLogs";
+import { InboundOutboundPage, StockMovementsPage, StoreReportsPage } from "@/pages/WarehouseLogs";
+import { MaterialDetailsPage } from "@/pages/MaterialDetails";
+import { ReadyStockPage } from "@/pages/ReadyStock";
 import { DailyPlanPage, FormulationPage, NutrientSpecPage, PlanningOverviewPage } from "@/pages/PlanningPages";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import "@/styles/global.css";
@@ -82,6 +79,7 @@ export default function App() {
             <Route path="inward-outward/documents" element={<DocumentsPage />} />
             <Route path="warehouse-store" element={<StoreOverviewPage />} />
             <Route path="warehouse-store/material-details" element={<MaterialDetailsPage />} />
+            <Route path="warehouse-store/ready-stock" element={<ReadyStockPage />} />
             <Route path="warehouse-store/inbound-outbound" element={<InboundOutboundPage />} />
             <Route path="warehouse-store/stock-movements" element={<StockMovementsPage />} />
             <Route path="warehouse-store/reports" element={<StoreReportsPage />} />

@@ -30,7 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(USER_KEY);
       const tok = localStorage.getItem(TOKEN_KEY);
-      if (raw) setUser(JSON.parse(raw) as AuthUser);
+      if (raw) {
+        const saved = JSON.parse(raw) as AuthUser;
+        if (saved.organizationName === "CatelFeed") saved.organizationName = "CattleFeed";
+        setUser(saved);
+      }
       if (tok) setToken(tok);
     } catch {
       localStorage.removeItem(USER_KEY);

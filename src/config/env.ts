@@ -1,7 +1,7 @@
 const rawApiUrl = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 export const env = {
-  appName: import.meta.env.VITE_APP_NAME || "CatelFeed",
+  appName: import.meta.env.VITE_APP_NAME || "CattleFeed",
   appEnv: import.meta.env.VITE_APP_ENV || import.meta.env.MODE,
   isProd: import.meta.env.PROD,
   isDev: import.meta.env.DEV,

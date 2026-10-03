@@ -91,6 +91,8 @@ const FORMULA: Record<string, [string, string][]> = {
   ],
 };
 
+const TODAY_GRADES = ["cf-700", "cf-500", "cf-900", "madhur-mix"] as const;
+
 const NUTRIENTS: Record<string, [string, string, string, string][]> = {
   "cf-700": [
     ["Crude protein", "16.5", "16.0", "18.0"],
@@ -117,6 +119,14 @@ const NUTRIENTS: Record<string, [string, string, string, string][]> = {
     ["Phosphorus", "0.6", "0.4", "0.9"],
     ["Moisture", "11.0", "0.0", "11.0"],
   ],
+  "madhur-mix": [
+    ["Crude protein", "14.0", "12.0", "16.0"],
+    ["Crude fat", "3.5", "2.5", "5.0"],
+    ["Crude fibre", "8.0", "0.0", "12.0"],
+    ["Calcium", "0.8", "0.6", "1.2"],
+    ["Phosphorus", "0.5", "0.4", "0.8"],
+    ["Moisture", "11.0", "0.0", "11.0"],
+  ],
 };
 
 function stamp(index: number) {
@@ -131,12 +141,68 @@ function packed(bags: number) {
   return ((bags * 50) / 1000).toFixed(2);
 }
 
+/** Today's mill plan. Batch count × batch size equals the planned tonnes. */
+export function todayMillPlans(date: string): PlanRow[] {
+  const mark = date.slice(5).replace("-", "");
+  return [
+    {
+      id: `PL-MILL-${mark}-A`,
+      date,
+      shift: "A",
+      product: "cf-700",
+      planMt: "56.00",
+      batchMt: "7.00",
+      batches: "8",
+      form: "Pellet",
+      status: "Running",
+      remarks: "Morning grade on the mill",
+    },
+    {
+      id: `PL-MILL-${mark}-A2`,
+      date,
+      shift: "A",
+      product: "cf-500",
+      planMt: "28.00",
+      batchMt: "7.00",
+      batches: "4",
+      form: "Pellet",
+      status: "Released",
+      remarks: "Second grade on shift A",
+    },
+    {
+      id: `PL-MILL-${mark}-B`,
+      date,
+      shift: "B",
+      product: "cf-900",
+      planMt: "42.00",
+      batchMt: "7.00",
+      batches: "6",
+      form: "Pellet",
+      status: "Released",
+      remarks: "Afternoon high-protein grade",
+    },
+    {
+      id: `PL-MILL-${mark}-C`,
+      date,
+      shift: "C",
+      product: "madhur-mix",
+      planMt: "12.00",
+      batchMt: "4.00",
+      batches: "3",
+      form: "Mash",
+      status: "Draft",
+      remarks: "Night mash, waiting release",
+    },
+  ];
+}
+
 export function weekPlans(): PlanRow[] {
   const dates = recentDates(7);
   return dates.flatMap((date, index) => {
+    if (index === dates.length - 1) return todayMillPlans(date);
     const day = DAY[index];
     const mt = packed(day.bags);
-    const rows: PlanRow[] = [
+    return [
       {
         id: `PL-${stamp(index)}-A`,
         date,
@@ -150,28 +216,39 @@ export function weekPlans(): PlanRow[] {
         remarks: `${batchNo(index)} packed`,
       },
     ];
-    if (index === dates.length - 1) {
-      rows.push({
-        id: "PL-RUN",
-        date,
-        shift: "B",
-        product: "cf-700",
-        planMt: "50.00",
-        batchMt: "7.00",
-        batches: "8",
-        form: "Pellet",
-        status: "Running",
-        remarks: "B-0908 still on the mill",
-      });
-    }
-    return rows;
   });
+}
+
+export function todayFormula(date: string): FormulaRow[] {
+  const mark = date.slice(5).replace("-", "");
+  const rows: FormulaRow[] = [];
+  TODAY_GRADES.forEach((product) => {
+    (FORMULA[product] || []).forEach(([material, inclusion], line) => {
+      rows.push({
+        id: `FM-MILL-${mark}-${product}-${line + 1}`,
+        date,
+        product,
+        material,
+        inclusion,
+        kgPerMt: (Number(inclusion) * 10).toFixed(1),
+        remarks: "",
+        version: "1",
+        effectiveFrom: date,
+        status: "Approved",
+      });
+    });
+  });
+  return rows;
 }
 
 export function weekFormula(): FormulaRow[] {
   const dates = recentDates(7);
   const rows: FormulaRow[] = [];
   dates.forEach((date, index) => {
+    if (index === dates.length - 1) {
+      rows.push(...todayFormula(date));
+      return;
+    }
     Object.entries(FORMULA).forEach(([product, lines]) => {
       lines.forEach(([material, inclusion], line) => {
         rows.push({
@@ -181,7 +258,7 @@ export function weekFormula(): FormulaRow[] {
           material,
           inclusion,
           kgPerMt: (Number(inclusion) * 10).toFixed(1),
-          remarks: material === "molasses" && index === dates.length - 1 ? "220 kg of 400 kg still short on the mill" : "",
+          remarks: "",
           version: "1",
           effectiveFrom: date,
           status: "Approved",
@@ -192,10 +269,38 @@ export function weekFormula(): FormulaRow[] {
   return rows;
 }
 
+export function todayNutrients(date: string): NutrientRow[] {
+  const mark = date.slice(5).replace("-", "");
+  const rows: NutrientRow[] = [];
+  TODAY_GRADES.forEach((product) => {
+    (NUTRIENTS[product] || []).forEach(([nutrient, target, min, max], line) => {
+      rows.push({
+        id: `NT-MILL-${mark}-${product}-${line + 1}`,
+        date,
+        product,
+        nutrient,
+        target,
+        min,
+        max,
+        unit: "%",
+        basis: "As-fed",
+        mandatory: "Yes",
+        status: "Approved",
+        version: "1",
+      });
+    });
+  });
+  return rows;
+}
+
 export function weekNutrients(): NutrientRow[] {
   const dates = recentDates(7);
   const rows: NutrientRow[] = [];
   dates.forEach((date, index) => {
+    if (index === dates.length - 1) {
+      rows.push(...todayNutrients(date));
+      return;
+    }
     Object.entries(NUTRIENTS).forEach(([product, lines]) => {
       lines.forEach(([nutrient, target, min, max], line) => {
         rows.push({

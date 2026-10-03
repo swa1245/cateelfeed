@@ -1,4 +1,5 @@
 import { weekFinishQc, weekProcessQc, weekRawQc, weekSamples } from "@/data/history";
+import { recentDates } from "@/data/movements";
 
 export const QC_DECISIONS = ["Pending", "Pass", "Hold", "Reject"] as const;
 export const QC_SHIFTS = ["A", "B", "C", "Lab"] as const;
@@ -164,6 +165,17 @@ function read<T>(key: string, seed: T[]): T[] {
 
 function write<T>(key: string, rows: T[]) {
   localStorage.setItem(key, JSON.stringify(rows));
+}
+
+function ensureRecent<T extends { id: string; date: string }>(key: string, rows: T[], fresh: T[]) {
+  const ids = new Set(rows.map((row) => row.id));
+  const covered = new Set(rows.map((row) => row.date));
+  const window = new Set(recentDates(7));
+  const extra = fresh.filter((row) => window.has(row.date) && !covered.has(row.date) && !ids.has(row.id));
+  if (!extra.length) return rows;
+  const next = [...rows, ...extra];
+  write(key, next);
+  return next;
 }
 
 export function nextQcId(prefix: string, rows: { id: string }[]) {
@@ -362,19 +374,22 @@ function sampleSeed(): SampleRow[] {
 }
 
 export function listRawQc() {
-  return read(RAW_KEY, rawSeed()).map((row) => stampRaw(row));
+  const seeded = rawSeed();
+  return ensureRecent(RAW_KEY, read(RAW_KEY, seeded), seeded).map((row) => stampRaw(row));
 }
 export function saveRawQc(rows: RawQcRow[]) {
   write(RAW_KEY, rows);
 }
 export function listProcessQc() {
-  return read(PROCESS_KEY, processSeed()).map((row) => stampProcess(row));
+  const seeded = processSeed();
+  return ensureRecent(PROCESS_KEY, read(PROCESS_KEY, seeded), seeded).map((row) => stampProcess(row));
 }
 export function saveProcessQc(rows: ProcessQcRow[]) {
   write(PROCESS_KEY, rows);
 }
 export function listFinishQc() {
-  return read(FINISH_KEY, finishSeed()).map((row) => stampFinish(row));
+  const seeded = finishSeed();
+  return ensureRecent(FINISH_KEY, read(FINISH_KEY, seeded), seeded).map((row) => stampFinish(row));
 }
 export function saveFinishQc(rows: FinishQcRow[]) {
   write(FINISH_KEY, rows);

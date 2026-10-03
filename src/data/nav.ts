@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   LayoutGrid,
   Package,
+  PackageCheck,
   Warehouse,
   Wrench,
   Zap,
@@ -44,7 +45,7 @@ export type NavItem = {
   children?: NavLinkItem[];
 };
 
-/** CatelFeed sidebar — shown after login. */
+/** CattleFeed sidebar — shown after login. */
 export const NAV_ITEMS: NavItem[] = [
   {
     name: "Dashboard",
@@ -88,6 +89,7 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { name: "Store Overview", path: "/warehouse-store", end: true, icon: LayoutGrid },
       { name: "Material Details", path: "/warehouse-store/material-details", icon: Package },
+      { name: "Production Ready Stock", path: "/warehouse-store/ready-stock", icon: PackageCheck },
       { name: "Inbound / Outbound", path: "/warehouse-store/inbound-outbound", icon: ArrowLeftRight },
       { name: "Stock Movements", path: "/warehouse-store/stock-movements", icon: Activity },
       { name: "Reports", path: "/warehouse-store/reports", icon: FileBarChart },

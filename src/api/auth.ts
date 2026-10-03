@@ -14,7 +14,7 @@ export type LoginResponse = {
   message?: string;
 };
 
-/** Local demo session — CatelFeed has no backend yet. Any login succeeds. */
+/** Local demo session — CattleFeed has no backend yet. Any login succeeds. */
 export async function loginRequest(email: string, password: string): Promise<LoginResponse> {
   const id = email.trim() || "demo";
   const name = id.includes("@") ? id.split("@")[0] : id;
@@ -28,7 +28,7 @@ export async function loginRequest(email: string, password: string): Promise<Log
       username: name || "demo",
       email: id.includes("@") ? id : `${id}@catelfeed.local`,
       role: "operator",
-      organizationName: "CatelFeed",
+      organizationName: "CattleFeed",
     },
   };
 }

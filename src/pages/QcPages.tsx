@@ -244,7 +244,7 @@ function DecisionDonut({ pass, hold, reject }: { pass: number; hold: number; rej
   return (
     <div className="cf-qc-donut">
       <svg viewBox="0 0 140 140" role="img" aria-label={`${rate} percent of today's checks passed`}>
-        <circle cx="70" cy="70" r={radius} fill="none" stroke="#e4c9a8" strokeWidth="14" />
+        <circle cx="70" cy="70" r={radius} fill="none" stroke="#cbd5e1" strokeWidth="14" />
         {parts.map((part) => {
           if (!part.count) return null;
           const length = (part.count / total) * circumference;
@@ -336,7 +336,7 @@ function ProcessChart({ rows }: { rows: { stage: string; moisture: string; temp:
     <svg className="cf-qc-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Batch moisture and temperature from mash to cooler">
       {[0, 10, 20].map((tick) => (
         <g key={tick}>
-          <line x1={pad.l} x2={width - pad.r} y1={yMoisture(tick)} y2={yMoisture(tick)} stroke="#d4b48a" />
+          <line x1={pad.l} x2={width - pad.r} y1={yMoisture(tick)} y2={yMoisture(tick)} stroke="#94a3b8" />
           <text x={pad.l - 4} y={yMoisture(tick) + 3} textAnchor="end">{tick}</text>
         </g>
       ))}
@@ -356,7 +356,7 @@ function ProcessChart({ rows }: { rows: { stage: string; moisture: string; temp:
       })}
       <polyline points={line} fill="none" stroke="#1f9d4e" strokeWidth="2.5" strokeLinejoin="round" />
       {rows.map((row, index) => (
-        <circle key={`${row.stage}-dot`} cx={x(index)} cy={yMoisture(num(row.moisture))} r="3.5" fill="#fff" stroke="#1f9d4e" strokeWidth="2" />
+        <circle key={`${row.stage}-dot`} cx={x(index)} cy={yMoisture(num(row.moisture))} r="5" fill="#fff" stroke="#15803d" strokeWidth="2.5" />
       ))}
       {rows.map((row, index) => (
         <text key={`${row.stage}-label`} x={x(index)} y={height - 8} textAnchor="middle">{short[row.stage] || row.stage}</text>

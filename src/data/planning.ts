@@ -1,4 +1,5 @@
-import { weekApprovals, weekFormula, weekNutrients, weekPlans } from "@/data/history";
+import { todayFormula, todayMillPlans, todayNutrients, weekApprovals, weekFormula, weekNutrients, weekPlans } from "@/data/history";
+import { todayIso } from "@/data/movements";
 
 export type PlanRow = {
   id: string;
@@ -115,8 +116,17 @@ function stampNutrient(row: NutrientRow): NutrientRow {
   };
 }
 
+function withToday<T extends { id: string; date: string }>(key: string, seed: T[], todayRows: (date: string) => T[]) {
+  const today = todayIso();
+  const rows = read<T>(key, seed);
+  if (rows.some((row) => row.date === today && row.id.includes("-MILL-"))) return rows;
+  const next = [...rows.filter((row) => row.date !== today), ...todayRows(today)];
+  write(key, next);
+  return next;
+}
+
 export function listPlans() {
-  return read<PlanRow>(PLAN_KEY, weekPlans());
+  return withToday<PlanRow>(PLAN_KEY, weekPlans(), todayMillPlans);
 }
 
 export function savePlans(rows: PlanRow[]) {
@@ -124,7 +134,7 @@ export function savePlans(rows: PlanRow[]) {
 }
 
 export function listFormula() {
-  return read<FormulaRow>(FORMULA_KEY, weekFormula()).map(stampFormula);
+  return withToday<FormulaRow>(FORMULA_KEY, weekFormula(), todayFormula).map(stampFormula);
 }
 
 export function saveFormula(rows: FormulaRow[]) {
@@ -132,7 +142,7 @@ export function saveFormula(rows: FormulaRow[]) {
 }
 
 export function listNutrients() {
-  return read<NutrientRow>(NUTRIENT_KEY, weekNutrients()).map(stampNutrient);
+  return withToday<NutrientRow>(NUTRIENT_KEY, weekNutrients(), todayNutrients).map(stampNutrient);
 }
 
 export function saveNutrients(rows: NutrientRow[]) {

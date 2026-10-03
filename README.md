@@ -1,4 +1,4 @@
-# CatelFeed Frontend
+# CattleFeed Frontend
 
 Vite + React 19 + TypeScript app configured for production use.
 

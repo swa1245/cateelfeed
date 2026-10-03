@@ -6,7 +6,7 @@ export function NotFoundPage() {
       <header className="hero">
         <p className="eyebrow">404</p>
         <h1>Page not found</h1>
-        <p className="lede">That route does not exist in CatelFeed.</p>
+        <p className="lede">That route does not exist in CattleFeed.</p>
         <Link className="link" to="/dashboard">
           Back to dashboard
         </Link>

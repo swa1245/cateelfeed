@@ -86,7 +86,7 @@ export function LoginPage() {
         <div className="cf-auth-brand">
           <BrandMark />
           <div>
-            <p className="cf-auth-name">CatelFeed</p>
+            <p className="cf-auth-name">CattleFeed</p>
             <p className="cf-auth-tag">Cattle Feed Mill System</p>
           </div>
         </div>
@@ -220,7 +220,7 @@ export function LoginPage() {
             <span>
               <Building2 size={14} />
               <span>
-                <strong>CatelFeed</strong> Empowering cattle feed mills
+                <strong>CattleFeed</strong> Empowering cattle feed mills
               </span>
             </span>
           </div>

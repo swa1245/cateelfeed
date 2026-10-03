@@ -157,7 +157,9 @@ export function Sidebar() {
   const org =
     user?.organizationName?.trim() ||
     (user?.email ? String(user.email).split("@")[1] : "") ||
-    "CatelFeed";
+    "CattleFeed";
+  const brand = env.appName === "CatelFeed" ? "CattleFeed" : env.appName;
+  const orgLine = !org || org === brand || org === "CatelFeed" ? "Cattle feed mill" : org;
 
   return (
     <aside className="cf-sidebar">
@@ -166,9 +168,9 @@ export function Sidebar() {
           CF
         </div>
         <div className="cf-brand-text">
-          <p className="cf-brand-name">{env.appName}</p>
-          <p className="cf-brand-org" title={org}>
-            {org}
+          <p className="cf-brand-name">{brand}</p>
+          <p className="cf-brand-org" title={orgLine}>
+            {orgLine}
           </p>
         </div>
       </div>

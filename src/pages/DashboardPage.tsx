@@ -7,13 +7,12 @@ import {
   Factory,
   FlaskConical,
   Warehouse,
-  Wrench,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { listBreakdowns, listChecklist, listPreventive, pmState } from "@/data/maintenance";
 import { inwardStage, listInward, listOutward, materialLabel, outwardStage, packedKg, productLabel, todayIso, waitingLong } from "@/data/movements";
 import { analyseFormula, approvedFormula, nutrientCard } from "@/data/planning";
-import { listBatches, listDowntime, listProcessLog, liveBatch, type BatchRow } from "@/data/production";
+import { listBatches, listDowntime, listProcessLog, listBatchReports, liveBatch, type BatchRow } from "@/data/production";
 import { listFinishQc, listProcessQc, listRawQc, listSamples } from "@/data/qc";
 import { STORE_ALERTS, STORE_RACKS, STORE_TOTALS } from "@/data/store";
 import {
@@ -70,12 +69,6 @@ function ageText(hours: number) {
   return `${Math.floor(hours / 24)} d`;
 }
 
-function latestStamp(dates: string[]) {
-  const clean = dates.map((date) => date.slice(0, 10)).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)).sort();
-  if (!clean.length) return "No saved record";
-  return `Latest record ${dayLabel(clean[clean.length - 1])}`;
-}
-
 function currentStage(batch: BatchRow | undefined, logs: { batchNo: string; date: string; time: string; stage: string }[]) {
   if (!batch) return "";
   if (batch.status === "Completed") return "Completed";
@@ -96,48 +89,64 @@ function RangeDot({ band, detail }: { band: string; detail?: string }) {
   return <i className={`cf-dash-range ${tone}`} title={label} aria-label={label} />;
 }
 
-function DayBars({ points }: { points: { label: string; date: string; mt: number; plan: number; live?: boolean; tip: string }[] }) {
+function smoothLine(pts: [number, number][]) {
+  if (!pts.length) return "";
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i += 1) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+
+function DayBars({ points }: { points: { label: string; date: string; mt: number; plan: number; reject: number; live?: boolean; tip: string }[] }) {
   const navigate = useNavigate();
   const width = 680;
-  const height = 176;
-  const pad = { l: 28, r: 8, t: 14, b: 26 };
+  const height = 230;
+  const pad = { l: 36, r: 16, t: 22, b: 28 };
   const plotW = width - pad.l - pad.r;
   const plotH = height - pad.t - pad.b;
-  const max = Math.max(10, ...points.map((point) => Math.max(point.mt, point.plan)));
-  const slot = plotW / Math.max(points.length, 1);
+  const peak = Math.max(1, ...points.map((point) => point.mt));
+  const max = peak * 1.28;
+  const slot = plotW / Math.max(points.length - 1, 1);
+  const x = (index: number) => pad.l + slot * index;
   const y = (value: number) => pad.t + plotH - (value / max) * plotH;
+  const base = pad.t + plotH;
+  const coords = points.map((point, index) => [x(index), y(point.mt)] as [number, number]);
+  const curve = smoothLine(coords);
+  const area = `${curve} L ${x(points.length - 1)} ${base} L ${x(0)} ${base} Z`;
+  const ticks = [0, max / 2, max];
   return (
-    <svg className="cf-dash-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Packed tonnes for the past 7 days and today, with the plan marked">
+    <svg className="cf-dash-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Packed tonnes curve for the past 7 days and today">
       <defs>
-        <linearGradient id="cf-bar-done" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#c2410c" />
-          <stop offset="100%" stopColor="#7c2d12" />
-        </linearGradient>
-        <linearGradient id="cf-bar-today" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f6c453" />
-          <stop offset="100%" stopColor="#d97706" />
+        <linearGradient id="cf-area-pack" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2563eb" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
         </linearGradient>
       </defs>
-      {[0, max / 2, max].map((tick) => (
+      {ticks.map((tick) => (
         <g key={tick}>
-          <line x1={pad.l} x2={width - pad.r} y1={y(tick)} y2={y(tick)} stroke="#efe4d6" />
-          <text x={pad.l - 4} y={y(tick) + 3} textAnchor="end">{Math.round(tick)}</text>
+          <line x1={pad.l} x2={width - pad.r} y1={y(tick)} y2={y(tick)} stroke="#cbd5e1" />
+          <text x={pad.l - 6} y={y(tick) + 3} textAnchor="end">{tick >= 10 ? tick.toFixed(0) : tick.toFixed(1)}</text>
         </g>
       ))}
-      {points.map((point, index) => {
-        const barW = Math.min(22, slot - 10);
-        const x = pad.l + slot * index + (slot - barW) / 2;
-        const top = y(point.mt);
-        return (
-          <g key={point.date} className="is-link" onClick={() => navigate(`/production/batch-history?date=${point.date}`)}>
-            <title>{point.tip} Open this day’s production sheet.</title>
-            <rect x={x} y={top} width={barW} height={Math.max(pad.t + plotH - top, point.mt ? 2 : 0)} rx="6" fill={point.live ? "url(#cf-bar-today)" : "url(#cf-bar-done)"} />
-            {point.plan > 0 ? <line x1={x - 2} x2={x + barW + 2} y1={y(point.plan)} y2={y(point.plan)} stroke="#f6c453" strokeWidth="3" strokeLinecap="round" /> : null}
-            <text x={x + barW / 2} y={Math.max(top - 4, 12)} textAnchor="middle">{point.mt ? point.mt.toFixed(1) : ""}</text>
-            <text x={x + barW / 2} y={height - 8} textAnchor="middle">{point.label}</text>
-          </g>
-        );
-      })}
+      <path d={area} fill="url(#cf-area-pack)" />
+      <path d={curve} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinejoin="round" />
+      {points.map((point, index) => (
+        <g key={point.date} className="is-link" onClick={() => navigate(`/production/batch-history?date=${point.date}`)}>
+          <title>{point.tip} Open this day’s production sheet.</title>
+          <circle cx={x(index)} cy={y(point.mt)} r={point.live ? 7 : 5} fill={point.live ? "#d97706" : "#fff"} stroke={point.live ? "#d97706" : "#2563eb"} strokeWidth="2.5" />
+          <text x={x(index)} y={Math.max(12, y(point.mt) - 10)} textAnchor="middle" fill={point.live ? "#b45309" : "#1d4ed8"}>{point.mt ? point.mt.toFixed(1) : ""}</text>
+          <text x={x(index)} y={height - 8} textAnchor="middle">{point.label}</text>
+        </g>
+      ))}
     </svg>
   );
 }
@@ -159,7 +168,7 @@ function StoreBars({ rows }: { rows: { label: string; stockMt: number }[] }) {
         return (
           <g key={store.label}>
             <text x={pad.l - 8} y={y + bar / 2 + 3} textAnchor="end">{store.label}</text>
-            <rect x={pad.l} y={y} width={plotW} height={bar} rx={bar / 2} fill="#f3e6d4" />
+            <rect x={pad.l} y={y} width={plotW} height={bar} rx={bar / 2} fill="#cbd5e1" />
             <rect x={pad.l} y={y} width={Math.max(barW, 0)} height={bar} rx={bar / 2} fill={colors[index % colors.length]} />
             <text x={pad.l + barW + 6} y={y + bar / 2 + 3}>{store.stockMt.toFixed(1)}</text>
           </g>
@@ -184,7 +193,7 @@ function DecisionDonut({ pass, hold, reject, pending }: { pass: number; hold: nu
   return (
     <div className="cf-dash-donut">
       <svg viewBox="0 0 110 110" role="img" aria-label={`${total} QC checks today`}>
-        <circle cx="55" cy="55" r={radius} fill="none" stroke="#f3eadf" strokeWidth="12" />
+        <circle cx="55" cy="55" r={radius} fill="none" stroke="#cbd5e1" strokeWidth="12" />
         {parts.map((part) => {
           if (!part.count) return null;
           const length = (part.count / total) * circumference;
@@ -271,16 +280,18 @@ export function DashboardPage() {
     const breakdowns = listBreakdowns();
     const preventive = listPreventive();
     const checks = listChecklist().filter((row) => row.date === today && row.result === "Attention");
+    const reports = listBatchReports();
     const days = [7, 6, 5, 4, 3, 2, 1, 0].map((ago) => {
       const date = isoDaysAgo(ago);
       const rows = batches.filter((row) => row.date === date);
       const mt = rows.reduce((sum, row) => sum + packedMt(row), 0);
       const plan = rows.reduce((sum, row) => sum + num(row.qtyMt), 0);
+      const reject = reports.filter((row) => row.date === date).reduce((sum, row) => sum + num(row.rejectMt), 0);
       const variance = mt - plan;
       const tip = rows.length
-        ? `${dayLabel(date)}: planned ${plan.toFixed(2)} MT, packed ${mt.toFixed(2)} MT, variance ${variance.toFixed(2)} MT`
+        ? `${dayLabel(date)}: planned ${plan.toFixed(2)} MT, packed ${mt.toFixed(2)} MT, rejected ${reject.toFixed(2)} MT, variance ${variance.toFixed(2)} MT`
         : `${dayLabel(date)}: no production recorded`;
-      return { label: dayLabel(date), date, mt, plan, live: date === today, tip };
+      return { label: dayLabel(date), date, mt, plan, reject, live: date === today, tip };
     });
     const live = liveBatch(batches);
     const attention: Attention[] = [];
@@ -546,8 +557,6 @@ export function DashboardPage() {
   const powerBand = powerFactors.length ? (Math.min(...powerFactors) < POWER_FACTOR_TARGET ? "Watch" : "Normal") : "";
   const utilityToday = data.power.length + data.boiler.length + data.water.length + data.air.length > 0;
   const openJobs = data.breakdowns.filter((row) => row.status !== "Closed");
-  const overdue = data.preventive.filter((row) => pmState(row, today) === "Overdue");
-  const downMachines = new Set(openJobs.map((row) => row.machine)).size;
   const livePacked = data.live ? packedMt(data.live) : 0;
   const livePlan = data.live ? num(data.live.qtyMt) : 0;
   const liveLeft = livePlan - livePacked;
@@ -593,10 +602,14 @@ export function DashboardPage() {
     <div className="cf-page cf-sheet-page cf-dash-home">
       <header className="cf-dash-hero">
         <div>
-          <p>CatelFeed · Plant overview</p>
+          <p>CattleFeed · Plant overview</p>
           <h1>{hello}, {name}</h1>
           <p>Today&apos;s plant activity and operational status</p>
         </div>
+        <aside className="cf-dash-hero-side">
+          <span>{dayLabel(today)}</span>
+          <strong>Today</strong>
+        </aside>
       </header>
 
       <div className="cf-dash-kpis">
@@ -649,29 +662,19 @@ export function DashboardPage() {
             {utilityToday ? `${husk.toLocaleString("en-IN")} kg husk${utilityAlert ? " · alert" : ""}` : "No utility readings entered for this shift"}
           </em>
         </Link>
-        <Link to={`/maintenance/breakdown?date=${openJobs[0]?.date || today}`}>
-          <Wrench size={15} />
-          <span>Maintenance</span>
-          <strong>{openJobs.length ? `${openJobs.length} open` : "None open"}</strong>
-          <em className={overdue.length || downMachines ? "is-alert" : ""}>
-            {overdue.length ? `${overdue.length} overdue PM` : "No overdue PM"}
-            {downMachines ? ` · ${downMachines} unavailable` : ""}
-          </em>
-        </Link>
       </div>
 
       <div className="cf-dash-board">
         <section>
           <header>
             <h2>Production · 7 days and today</h2>
-            <span className="cf-dash-meta">{latestStamp(data.days.filter((day) => day.mt || day.plan).map((day) => day.date))}</span>
             <Link to={`/production/batch-history?date=${today}`}>Open</Link>
           </header>
-          <p className="cf-dash-key"><i className="is-brown" />Packed tonnes<i className="is-gold" />Plan and today</p>
+          <p className="cf-dash-key"><i className="is-plan" />Packed tonnes<i className="is-gold" />Today</p>
           <DayBars points={data.days} />
           <p className="cf-dash-note">
             {chartHasPacked
-              ? "Each bar is packed production (bags × 50 kg) for that day. The gold mark is the plan. Click a day to open its production sheet."
+              ? "The curve is packed tonnes for each day. The amber point is today. Click a day to open its production sheet."
               : "No packed production in the past 7 days."}
           </p>
         </section>
@@ -713,7 +716,6 @@ export function DashboardPage() {
                   ? ` Held or unreleased: ${finishedRows.filter((row) => row.held > 0).map((row) => `${row.label} ${row.held.toFixed(2)} MT`).join(", ")}.`
                   : " Nothing is held back from release."}
               </p>
-              <p className="cf-dash-meta">{latestStamp(data.outwardAll.map((row) => row.date))}</p>
             </>
           ) : (
             <p className="cf-dash-empty">No finished goods are waiting in the plant.</p>
@@ -725,7 +727,6 @@ export function DashboardPage() {
         <section>
           <header>
             <h2>QC decisions</h2>
-            <span className="cf-dash-meta">{data.qc.length ? latestStamp(data.qc.map((row) => row.date)) : "No QC checks recorded today"}</span>
             <Link to={`/qc/raw-material?date=${today}`}>Open</Link>
           </header>
           <DecisionDonut pass={pass} hold={hold} reject={reject} pending={pending} />
@@ -757,7 +758,6 @@ export function DashboardPage() {
         <section>
           <header>
             <h2>Plan vs packed</h2>
-            <span className="cf-dash-meta">{selected ? latestStamp([selected.date]) : "No batch running"}</span>
             <Link to={`/production-planning/formulation?date=${selected?.date || today}`}>Formulation</Link>
           </header>
           {planRows.length === 0 ? (
@@ -822,7 +822,6 @@ export function DashboardPage() {
         <section>
           <header>
             <h2>Utility today</h2>
-            {utilityToday ? <span className="cf-dash-meta">{latestStamp([...data.power, ...data.boiler, ...data.water, ...data.air].map((row) => row.date))}</span> : null}
             <Link to={`/utility/boiler?date=${today}`}>Open</Link>
           </header>
           {utilityToday ? (
@@ -865,12 +864,10 @@ export function DashboardPage() {
             <Link to={huskStock?.date ? `/utility/fuel?date=${huskStock.date}` : "/utility/fuel"}>Husk stock {huskStock ? `${fuelReading(huskStock).closing} ${huskStock.unit || "kg"}` : "not recorded"}</Link>
             <Link to={dieselStock?.date ? `/utility/fuel?date=${dieselStock.date}` : "/utility/fuel"}>Diesel {dieselStock ? `${fuelReading(dieselStock).closing} ${dieselStock.unit || "L"}` : "not recorded"}</Link>
           </p>
-          <p className="cf-dash-meta">{latestStamp([huskStock?.date || "", dieselStock?.date || ""])}</p>
         </section>
         <section>
           <header>
             <h2>Needs attention</h2>
-            <span className="cf-dash-meta">{data.attention.length ? latestStamp(data.attention.map((row) => row.date)) : "Nothing waiting"}</span>
             <Link to={`/maintenance/breakdown?date=${openJobs[0]?.date || today}`}>Open</Link>
           </header>
           {data.attention.length === 0 ? (

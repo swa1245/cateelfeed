@@ -1,5 +1,5 @@
 import { weekBatchReports, weekBatches, weekDowntime, weekIssues, weekLogs, weekReports, weekShiftReports } from "@/data/history";
-import { materialLabel } from "@/data/movements";
+import { materialLabel, recentDates } from "@/data/movements";
 import { approvedFormula } from "@/data/planning";
 import { listRawQc } from "@/data/qc";
 
@@ -179,6 +179,17 @@ function write<T>(key: string, rows: T[]) {
   localStorage.setItem(key, JSON.stringify(rows));
 }
 
+function ensureRecent<T extends { id: string; date: string }>(key: string, rows: T[], fresh: T[]) {
+  const ids = new Set(rows.map((row) => row.id));
+  const covered = new Set(rows.map((row) => row.date));
+  const window = new Set(recentDates(7));
+  const extra = fresh.filter((row) => window.has(row.date) && !covered.has(row.date) && !ids.has(row.id));
+  if (!extra.length) return rows;
+  const next = [...rows, ...extra];
+  write(key, next);
+  return next;
+}
+
 function num(value: string | undefined) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -264,7 +275,8 @@ function withBatchShift<T extends { batchNo: string; shift?: string }>(rows: T[]
 }
 
 export function listBatches() {
-  return read<BatchRow>(BATCH_KEY, weekBatches());
+  const seeded = weekBatches();
+  return ensureRecent(BATCH_KEY, read<BatchRow>(BATCH_KEY, seeded), seeded);
 }
 
 export function saveBatches(rows: BatchRow[]) {
