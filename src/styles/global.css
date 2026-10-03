@@ -6303,6 +6303,8 @@ input {
   font: inherit;
   font-weight: 700;
 }
+
+.cf-ready-bars {
   display: grid;
   gap: 8px;
   margin-bottom: 14px;
