@@ -193,7 +193,7 @@ export function loadWarehouseStorage(): WarehouseStorage {
 }
 
 export function saveWarehouseStorage(data: WarehouseStorage) {
-  write(STORAGE_KEY, data);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
 function readySeed(): ReadyStockRow[] {
